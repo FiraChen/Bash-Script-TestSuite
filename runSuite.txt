@@ -1,0 +1,103 @@
+#!/bin/bash
+ 
+if [ $# -ne 2 ]; then
+   
+echo "Error: Needs more arguements" 1>&2
+   
+exit 1
+ 
+
+fi
+
+ 
+if [ ! -r $1 ] || [ ! -x $2 ]; then
+   
+echo "Error: Permission denied" 1>&2
+   
+exit 1
+ 
+fi
+
+
+
+
+for test in $(cat $1); do
+  
+if [ -r ${test}.out ]; then
+    
+temp=$(mktemp /tmp/test.XXXXXXXX)
+  
+ 
+    
+if [ -r ${test}.args ] && [ -r ${test}.in ]; then
+      
+$2 $(cat ${test}.args) < ${test}.in > $temp
+  
+  
+elif [ -r ${test}.in ]; then
+      
+$2 < ${test}.in > $temp
+    
+
+elif [ -r ${test}.args ]; then
+      
+$2 $(cat ${test}.args) > $temp
+ 
+   
+else
+      
+$2 > $temp
+    
+fi 
+
+ 
+
+   
+cmp $temp ${test}.out > /dev/null
+
+    
+if [ ! $? -eq 0 ]; then
+        
+echo "Test failed: ${test}"
+        
+echo "Args:"
+        
+
+if [ -r ${test}.args ]; then
+          
+cat ${test}.args
+        
+fi
+        
+
+echo "Input:"
+        
+if [ -r ${test}.in ]; then
+          
+cat ${test}.in
+        
+fi
+       
+ 
+echo "Expected:"
+        
+cat ${test}.out
+        
+echo "Actual:"
+        
+cat $temp
+    
+fi
+    
+
+rm -f $temp    
+ 
+else
+    
+echo "Error: missing file" 1>&2
+    
+exit 1
+  
+fi
+
+done
